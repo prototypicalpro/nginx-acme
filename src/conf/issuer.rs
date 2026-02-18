@@ -301,7 +301,7 @@ impl Issuer {
 
             if let Some(symlink) = symlink {
                 let symlinkpath = state_dir.full_path(symlink);
-                std::fs::soft_link(path, symlinkpath).map_err(|_| Status::NGX_ERROR)?;
+                std::fs::soft_link(path, symlinkpath).unwrap();
             }
         }
         Ok(())
