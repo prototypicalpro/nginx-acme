@@ -290,7 +290,7 @@ async fn ngx_http_acme_update_certificates_for_issuer(
                         x,
                         issuer.name
                     );
-                    let _ = issuer.write_state_file(conf::issuer::ACCOUNT_URL_FILE, x.as_bytes());
+                    let _ = issuer.write_state_file(conf::issuer::ACCOUNT_URL_FILE, x.as_bytes(), None);
                 }
                 Ok(acme::NewAccountOutput::Found(x)) => {
                     ngx_log_debug!(
@@ -364,11 +364,11 @@ async fn ngx_http_acme_update_certificates_for_issuer(
                 };
 
                 // Write files even if we failed to update the shared zone.
-
-                let _ = issuer.write_state_file(std::format!("{order_id}.crt"), &val.bytes);
+                let primary_domain = order.identifiers[0].value();
+                let _ = issuer.write_state_file(std::format!("{order_id}.crt"), &val.bytes, Some(std::format!("{primary_domain}.crt")));
 
                 if !matches!(order.key, conf::pkey::PrivateKey::File(_)) {
-                    let _ = issuer.write_state_file(std::format!("{order_id}.key"), &pkey);
+                    let _ = issuer.write_state_file(std::format!("{order_id}.key"), &pkey, Some(std::format!("{primary_domain}.crt")));
                 }
 
                 next

@@ -10,6 +10,7 @@ use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::DirBuilderExt;
 use std::path::PathBuf;
+use std::string::String;
 
 use http::Uri;
 use nginx_sys::{ngx_conf_t, ngx_flag_t, ngx_msec_t, ngx_path_t, ngx_resolver_t, ngx_str_t};
@@ -290,13 +291,18 @@ impl Issuer {
         Ok(())
     }
 
-    pub fn write_state_file(&self, path: impl AsRef<[u8]>, buf: &[u8]) -> Result<(), Status> {
+    pub fn write_state_file(&self, path: impl AsRef<[u8]>, buf: &[u8], symlink: Option<String>) -> Result<(), Status> {
         let state_dir = unsafe { StateDir::from_ptr(self.state_path) };
 
         if let Some(state_dir) = state_dir {
             let path = state_dir.full_path(path);
 
             state_dir.write(&path, buf).map_err(|_| Status::NGX_ERROR)?;
+
+            if let Some(symlink) = symlink {
+                let symlinkpath = state_dir.full_path(symlink);
+                std::fs::soft_link(path, symlinkpath).map_err(|_| Status::NGX_ERROR)?;
+            }
         }
         Ok(())
     }
